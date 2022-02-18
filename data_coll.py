@@ -35,8 +35,8 @@ def main():
     # plt.show()
 
 
-    width = 800
-    height = 800
+    width = args.width
+    height = args.height
     fps = 30
 
     frameref_ms = int(time.time()*1000)
@@ -235,6 +235,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-u','--user',required=True,type=str)
 parser.add_argument('-p','--port',default='/dev/tty.usbserial-DM02590B',type=str)
 parser.add_argument('-n','--nloop',default=3,type=int)
+parser.add_argument('--width',default=600,type=int)
+parser.add_argument('--height',default=600,type=int)
 
 args = parser.parse_args()
 
