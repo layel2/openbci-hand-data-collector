@@ -2,15 +2,13 @@ from turtle import down
 import cv2
 import numpy as np
 import threading
-#from pyOpenBCI import OpenBCICyton
+from pyOpenBCI import OpenBCICyton
 import csv
 import argparse
 import os
 import glob
 import time
 from matplotlib import pyplot as plt
-import socket
-import json
 
 SCALE_FACTOR = (4500000)/24/(2**23-1) #From the pyOpenBCI repo
 playvid = False
@@ -221,41 +219,8 @@ def save_data(sample):
     data.append([i*SCALE_FACTOR for i in sample.channels_data] + [hand, light_show, time.time()])
 
 def start_board():
-    global data
-    global hand
-    global light_show
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_address = (args.ip, args.port)
-    sock.bind(server_address)
-    while True:
-        sub_data, addr = sock.recvfrom(20000)
-        sub_data = json.loads(sub_data.decode())['data']
-        data.append(sub_data + [hand, light_show, time.time()])
-        #print(sub_data)
-
-class data_thread(threading.Thread):
-    def __init__(self,event):
-        threading.Thread.__init__(self)
-        self.stopped = event
-        global data
-        global hand
-        global light_show
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server_address = (args.ip, args.port)
-        sock.bind(server_address)
-        self.sock = sock
-    
-    def run(self):
-        global data
-        global hand
-        global light_show
-        while not self.stopped.wait(1/500):
-            sub_data, addr = self.sock.recvfrom(20000)
-            sub_data = json.loads(sub_data.decode())['data']
-            data.append(sub_data + [hand, light_show, time.time()])
-
+    board = OpenBCICyton(port=args.port, daisy=True)
+    board.start_stream(save_data)
 
 def data_save(save_name):
     global data
@@ -268,15 +233,10 @@ def data_save(save_name):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-u','--user',required=True,type=str)
-#parser.add_argument('-p','--port',default='/dev/tty.usbserial-DM02590B',type=str)
+parser.add_argument('-p','--port',default='/dev/tty.usbserial-DM02590B',type=str)
 parser.add_argument('-n','--nloop',default=3,type=int)
 parser.add_argument('--width',default=600,type=int)
 parser.add_argument('--height',default=600,type=int)
-parser.add_argument("--ip",default="127.0.0.1", help="The ip to listen on")
-parser.add_argument("-p","--port",type=int, default=12345, help="The port to listen on")
-parser.add_argument("--address",default="/openbci", help="address to listen to")
-parser.add_argument("--option",default="print",help="Debugger option")
-parser.add_argument("--len",default=8,help="Debugger option")
 
 args = parser.parse_args()
 
@@ -286,13 +246,7 @@ if __name__ == '__main__':
         os.makedirs('bci_data')
     if not os.path.isdir(f'bci_data/{args.user}'):
         os.makedirs(f'bci_data/{args.user}')
-
-    stopFlag = threading.Event()
-    thread = data_thread(stopFlag)
-    thread.start()
-
-    # x = threading.Thread(target=start_board)
-    # x.daemon = True
-    # x.start()
+    x = threading.Thread(target=start_board)
+    x.daemon = True
+    x.start()
     main()
-    stopFlag.set()
