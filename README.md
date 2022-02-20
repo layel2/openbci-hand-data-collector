@@ -15,3 +15,10 @@
 	- \-\-width GUI width size
 	- \-\-height GUI height size
 3. Press KEY (L, R, B, F) for record
+
+## Output
+- `bci_data/username/xxx.csv`
+- Columns 1-16 brain wave 16 channel
+- Columns 17 activity left, right, both, foot
+- Columns 18 activity status True -> close hand, False -> open hand
+- Columns 19 activity timestamp(unix time)
