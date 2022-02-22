@@ -1,4 +1,3 @@
-from turtle import down
 import cv2
 import numpy as np
 import threading
